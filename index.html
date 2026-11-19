@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101114">
+<title>Моя зарплата</title>
+<style>
+:root{color-scheme:dark;--bg:#101114;--card:#1b1d22;--muted:#969ba6;--text:#f5f6f8;--accent:#8fbcff;--line:#30333b;--green:#8bd5a7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto}.top{padding:24px 2px 18px}.eyebrow{color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.top h1{font-size:30px;margin:7px 0 5px;letter-spacing:-.04em}.sub{color:var(--muted);font-size:14px;line-height:1.4}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:17px;margin:12px 0}.card h2{font-size:17px;margin:0 0 14px}.hero{background:linear-gradient(145deg,#202a3a,#1b1d22 70%)}.hero .amount{font-size:34px;font-weight:750;letter-spacing:-.04em;margin:5px 0}.muted{color:var(--muted)}.small{font-size:12px;color:var(--muted)}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}input[type=number],input[type=text]{width:100%;border:1px solid var(--line);border-radius:12px;background:#111318;color:var(--text);font:inherit;padding:12px;outline:none}input:focus{border-color:var(--accent)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pay{background:#111318;border-radius:14px;padding:13px}.pay strong{display:block;font-size:21px;margin:6px 0}.section{margin-top:22px}.alloc{padding:12px 0;border-bottom:1px solid var(--line)}.alloc:last-child{border:0}.alloc-name{font-size:14px;font-weight:600}.alloc-amount{font-weight:650;font-variant-numeric:tabular-nums}.controls{display:grid;grid-template-columns:1fr 74px;gap:12px;align-items:center;margin-top:9px}input[type=range]{width:100%;accent-color:var(--accent)}input.percent{padding:8px;text-align:center}.bar{height:9px;border-radius:10px;background:#343740;overflow:hidden;margin-top:10px}.bar>div{height:100%;background:var(--green);width:100%;transition:width .15s}.warning{color:#ffb4a9;font-size:12px;margin-top:7px}.good{color:var(--green);font-size:12px;margin-top:7px}.total{font-size:20px;font-weight:700}.resultrow{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}.resultrow:last-child{border:0}.btn{width:100%;padding:14px;border:0;border-radius:14px;background:var(--accent);color:#101114;font:700 15px inherit;margin-top:12px}.secondary{background:#30343d;color:var(--text)}.foot{text-align:center;color:var(--muted);font-size:11px;line-height:1.5;padding:18px 5px}
+</style>
+</head>
+<body>
+<main>
+<header class="top"><div class="eyebrow">Личный финансовый план</div><h1>Моя зарплата</h1><div class="sub">Распредели доход, запланируй накопления и узнай, сколько переводить с каждой выплаты.</div></header>
+<section class="card hero">
+ <div class="small">Общий доход за месяц, на руки</div><div class="amount" id="totalIncome">0 ₽</div>
+ <div class="split">
+  <div><label for="salary">Зарплата на руки</label><input id="salary" type="number" min="0" step="100" value="0"></div>
+  <div><label for="extra">Дополнительный доход</label><input id="extra" type="number" min="0" step="100" value="0"></div>
+ </div>
+</section>
+<section class="card">
+ <h2>Выплаты</h2>
+ <div class="row"><span class="muted">Доля аванса (28-го)</span><b id="advanceLabel">50%</b></div>
+ <input id="advance" type="range" min="0" max="100" step="5" value="50">
+ <div class="split" style="margin-top:12px">
+  <div class="pay"><span class="small">28-го числа · аванс</span><strong id="advanceAmount">0 ₽</strong></div>
+  <div class="pay"><span class="small">13-го числа · расчёт</span><strong id="settlementAmount">0 ₽</strong></div>
+ </div>
+ <p class="small">Укажи фактический процент аванса. Если выплаты неравные, настрой ползунок.</p>
+</section>
+<section class="card">
+ <h2>Распределение по категориям</h2>
+ <div class="small">Измени проценты. Общая сумма должна составлять 100%.</div>
+ <div id="allocations"></div>
+ <div class="bar"><div id="progress"></div></div>
+ <div class="row" style="margin-top:9px"><span class="muted">Распределено</span><b class="total" id="percentTotal">100%</b></div>
+ <div id="percentMessage" class="good">Весь доход распределён.</div>
+</section>
+<section class="card">
+ <h2>Сколько переводить после каждой выплаты</h2>
+ <div class="small">Суммы в каждой строке: сначала 28-го числа, затем 13-го.</div>
+ <div id="payoutPlan"></div>
+</section>
+<section class="card">
+ <h2>План накоплений</h2>
+ <div id="savingsPlan"></div>
+</section>
+<button class="btn" id="copy">Скопировать мой план</button>
+<button class="btn secondary" id="reset">Вернуть начальные настройки</button>
+<div class="foot">Настройки сохраняются на этом устройстве автоматически. Расчёт ведётся от суммы на руки, без повторного вычета НДФЛ.</div>
+</main>
+<script>
+const defaults=[
+ {name:"Обязательные расходы",p:50,saving:false},
+ {name:"Повседневные расходы",p:15,saving:false},
+ {name:"Финансовая подушка",p:15,saving:true},
+ {name:"Крупные покупки",p:10,saving:true},
+ {name:"Отдых и развлечения",p:5,saving:true},
+ {name:"Свободные деньги",p:5,saving:false}
+];
+let categories=JSON.parse(localStorage.getItem("salaryCats")||"null")||defaults.map(x=>({...x}));
+const $=id=>document.getElementById(id);
+const money=n=>Math.round(n).toLocaleString("ru-RU")+" ₽";
+const num=id=>Math.max(0,Number($(id).value)||0);
+const income=()=>num("salary")+num("extra");
+function save(){localStorage.setItem("salaryCats",JSON.stringify(categories));localStorage.setItem("salarySalary",$("salary").value);localStorage.setItem("salaryExtra",$("extra").value);localStorage.setItem("salaryAdvance",$("advance").value)}
+function render(){
+ const inc=income(), adv=Number($("advance").value), sum=categories.reduce((a,c)=>a+c.p,0);
+ $("totalIncome").textContent=money(inc);$("advanceLabel").textContent=adv+"%";
+ $("advanceAmount").textContent=money(inc*adv/100);$("settlementAmount").textContent=money(inc*(100-adv)/100);
+ $("percentTotal").textContent=sum+"%";$("percentTotal").style.color=sum===100?"var(--green)":"#ffb4a9";
+ $("progress").style.width=Math.min(sum,100)+"%";$("percentMessage").textContent=sum===100?"Весь доход распределён.":sum>100?"Уменьши категории на "+(sum-100)+"%.":"Осталось распределить "+(100-sum)+"%.";
+ $("percentMessage").className=sum===100?"good":"warning";
+ $("allocations").innerHTML=categories.map((c,i)=>`<div class="alloc"><div class="row"><span class="alloc-name">${c.name}</span><span class="alloc-amount">${money(inc*c.p/100)}</span></div><div class="controls"><input aria-label="Процент ${c.name}" type="range" min="0" max="100" value="${c.p}" data-range="${i}"><input class="percent" aria-label="Процент числом ${c.name}" type="number" min="0" max="100" value="${c.p}" data-number="${i}"></div></div>`).join("");
+ $("payoutPlan").innerHTML=categories.map(c=>`<div class="resultrow"><div class="row"><span>${c.name}</span><b>${money(inc*c.p/100)}</b></div><div class="small">${money(inc*c.p/100*adv/100)} / ${money(inc*c.p/100*(100-adv)/100)}</div></div>`).join("");
+ const savings=categories.filter(c=>c.saving).reduce((a,c)=>a+c.p,0);
+ $("savingsPlan").innerHTML=`<div class="row"><span class="muted">В накопления за месяц</span><b>${money(inc*savings/100)}</b></div><div class="row" style="margin-top:10px"><span class="muted">За 6 месяцев</span><b>${money(inc*savings/100*6)}</b></div><div class="row" style="margin-top:10px"><span class="muted">За год</span><b style="color:var(--green)">${money(inc*savings/100*12)}</b></div>`;
+ document.querySelectorAll("[data-range]").forEach(el=>el.addEventListener("input",e=>updateCat(+e.target.dataset.range,+e.target.value)));
+ document.querySelectorAll("[data-number]").forEach(el=>el.addEventListener("change",e=>updateCat(+e.target.dataset.number,Math.max(0,Math.min(100,+e.target.value||0)))));
+ save();
+}
+function updateCat(i,v){categories[i].p=v;render()}
+["salary","extra","advance"].forEach(id=>$(id).addEventListener("input",render));
+$("copy").addEventListener("click",async()=>{const inc=income(),adv=+$("advance").value;const t=["МОЙ ФИНАНСОВЫЙ ПЛАН",`Доход: ${money(inc)}`,`28-го числа: ${money(inc*adv/100)}`,`13-го числа: ${money(inc*(100-adv)/100)}`,...categories.map(c=>`${c.name}: ${c.p}% · ${money(inc*c.p/100)}`) ].join("\n");try{await navigator.clipboard.writeText(t);$("copy").textContent="План скопирован";setTimeout(()=>$("copy").textContent="Скопировать мой план",1800)}catch(e){alert(t)}});
+$("reset").addEventListener("click",()=>{categories=defaults.map(x=>({...x}));$("salary").value=0;$("extra").value=0;$("advance").value=50;render()});
+$("salary").value=localStorage.getItem("salarySalary")??"0";$("extra").value=localStorage.getItem("salaryExtra")??"0";$("advance").value=localStorage.getItem("salaryAdvance")??"50";render();
+</script>
+</body></html>
